@@ -1,4 +1,3 @@
-```python
 import re
 flags = open('flag.txt').read().splitlines()
 for flag in flags:
