@@ -202,7 +202,7 @@ p.interactive()
 ```
 
 ```bash
-python solve.py 
+$ python solve.py 
 [*] '/home/osboxes/Desktop/solver/libc.so.6'
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
