@@ -202,6 +202,7 @@ p.interactive()
 ```
 
 ```bash
+Executing the python script should provide us an interactive shell.
 $ python solve.py 
 [*] '/home/osboxes/Desktop/solver/libc.so.6'
     Arch:     amd64-64-little
