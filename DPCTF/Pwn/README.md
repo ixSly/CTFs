@@ -253,10 +253,10 @@ Please send your base64 encoded x64 shellcode that will be XOR'd with 0xb6 and e
 
 sor our shellcode will be XORed then base64 decoded, and then it will be executed.. I am not sure what is the purpose of this, but lets go with the flow.. [Googling](http://blog.dornea.nu/2016/08/23/testing-shellcodes/ "Googling") for a 64 bit shellcode that reads flag.txt and found one.
 
-So our goal is as the following: 
-1- Find the appropiate shellcode
-2-XOR it with whatever the server replies
-3- base64 encode it
+So our goal is as the following: <br/>
+1- Find the appropiate shellcode <br/>
+2-XOR it with whatever the server replies <br/>
+3- base64 encode it <br/>
 
 ```python
 from pwn import *
